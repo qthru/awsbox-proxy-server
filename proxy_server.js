@@ -71,11 +71,34 @@ proxy.on('proxyError', function (err, req, res) {
   });
 });
 
+function getCABundle(Bundle){
+	var ca = [];
+    try {
+    	var chain = fs.readFileSync(Bundle, 'utf8');
+    	chain = chain.split("\n");
+    	var cert = [];
+    	for(var line in chain){
+    		if(line.length > 0 ){
+    			cert.push(chain[line]);
+    			if(chain[line].match(/-END CERTIFICATE-/)){
+    				ca.push(cert.join("\n"));
+    				cert = [];
+    			}
+    		}
+    	}
+    } catch(e) {
+        return undefined;
+    }
+    
+	return ca;
+}
+
 // now for an ssl proxy
 if (['enable','force'].indexOf(sslConfig) != -1) {
   var sslServer = https.createServer({
     key: fs.readFileSync(path.join(process.env['HOME'], 'key.pem'), 'utf8'),
-    cert: fs.readFileSync(path.join(process.env['HOME'], 'cert.pem'), 'utf8')
+    cert: fs.readFileSync(path.join(process.env['HOME'], 'cert.pem'), 'utf8'),
+    ca: getCABundle('bundle.ca')
   }, function (req, res) {
     connect.compress()(req, res, function () {
       if (handleVerRequest(req, res)) return;
