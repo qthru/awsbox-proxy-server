@@ -10,4 +10,5 @@
 /git
 /key.pem
 /cert.pem
+/bundle.ca
 *~
